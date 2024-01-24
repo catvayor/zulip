@@ -249,6 +249,10 @@ export class Typeahead<ItemType extends string | object> {
     instance: tippy.Instance | undefined;
     requireHighlight: boolean;
     shouldHighlightFirstResult: () => boolean;
+    // Used for contenteditble divs. If this is set to false, we
+    // don't set the html content of the div from this module, and
+    // it's handled from the caller (or updater function) instead.
+    updateElementContent: boolean;
 
     constructor(input_element: TypeaheadInputElement, options: TypeaheadOptions<ItemType>) {
         this.input_element = input_element;
@@ -288,6 +292,7 @@ export class Typeahead<ItemType extends string | object> {
         this.values = new WeakMap();
         this.requireHighlight = options.requireHighlight ?? true;
         this.shouldHighlightFirstResult = options.shouldHighlightFirstResult ?? (() => true);
+        this.updateElementContent = options.updateElementContent ?? true;
 
         // The naturalSearch option causes arrow keys to immediately
         // update the search box with the underlying values from the
@@ -303,12 +308,17 @@ export class Typeahead<ItemType extends string | object> {
         }
         assert(val !== undefined);
         if (this.input_element.type === "contenteditable") {
-            this.input_element.$element
-                .text(this.updater(val, this.query, this.input_element, e) ?? "")
-                .trigger("change");
-            // Empty text after the change event handler
-            // converts the input text to html elements.
-            this.input_element.$element.text("");
+            if (this.updateElementContent) {
+                this.input_element.$element
+                    .text(this.updater(val, this.query, this.input_element, e) ?? "")
+                    .trigger("change");
+                // Empty text after the change event handler
+                // converts the input text to html elements.
+                this.input_element.$element.text("");
+            } else {
+                this.updater(val, this.query, this.input_element, e);
+                this.input_element.$element.trigger("change");
+            }
         } else {
             const after_text = this.updater(val, this.query, this.input_element, e) ?? "";
             const element_val = this.input_element.$element.val();
@@ -321,7 +331,7 @@ export class Typeahead<ItemType extends string | object> {
             this.input_element.$element.trigger("change");
         }
 
-        return this.hide();
+        return this.lookup(true);
     }
 
     set_value(): void {
@@ -809,4 +819,5 @@ type TypeaheadOptions<ItemType> = {
     ) => string | undefined;
     requireHighlight?: boolean;
     shouldHighlightFirstResult?: () => boolean;
+    updateElementContent?: boolean;
 };
