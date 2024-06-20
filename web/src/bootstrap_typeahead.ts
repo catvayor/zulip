@@ -249,6 +249,9 @@ export class Typeahead<ItemType extends string | object> {
     instance: tippy.Instance | undefined;
     requireHighlight: boolean;
     shouldHighlightFirstResult: () => boolean;
+    // Used for custom situations where we want to hide the typeahead
+    // after selecting an option, instead of the default call to lookup().
+    hideAfterSelect: () => boolean;
     // Used for contenteditble divs. If this is set to false, we
     // don't set the html content of the div from this module, and
     // it's handled from the caller (or updater function) instead.
@@ -292,6 +295,7 @@ export class Typeahead<ItemType extends string | object> {
         this.values = new WeakMap();
         this.requireHighlight = options.requireHighlight ?? true;
         this.shouldHighlightFirstResult = options.shouldHighlightFirstResult ?? (() => true);
+        this.hideAfterSelect = options.hideAfterSelect ?? (() => false);
         this.updateElementContent = options.updateElementContent ?? true;
 
         // The naturalSearch option causes arrow keys to immediately
@@ -331,6 +335,9 @@ export class Typeahead<ItemType extends string | object> {
             this.input_element.$element.trigger("change");
         }
 
+        if (this.hideAfterSelect()) {
+            return this.hide();
+        }
         return this.lookup(true);
     }
 
@@ -819,5 +826,6 @@ type TypeaheadOptions<ItemType> = {
     ) => string | undefined;
     requireHighlight?: boolean;
     shouldHighlightFirstResult?: () => boolean;
+    hideAfterSelect?: () => boolean;
     updateElementContent?: boolean;
 };
