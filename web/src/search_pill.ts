@@ -62,6 +62,7 @@ export function create_pills($pill_container: JQuery): SearchPillWidget {
         create_item_from_text: create_item_from_search_string,
         get_text_from_item: get_search_string_from_item,
         convert_to_pill_on_enter: false,
+        split_text_on_comma: false,
     });
     // We don't automatically create pills on paste. When the user
     // presses enter, we validate the input then.
