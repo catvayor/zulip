@@ -170,6 +170,9 @@
     .search-input {
         /* Avoid massive inheritance chain on font-size. */
         font-size: var(--base-font-size-px);
+        /* override height-input-pill from default input pills */
+        line-height: var(--height-search-input-pill);
+        min-height: var(--height-search-input-pill);
         /* override bootstrap padding for input[type="text"] */
         padding: 0;
         border: none;
@@ -211,7 +214,7 @@
         .pill {
             margin: 0;
             min-width: unset;
-            height: 26px;
+            height: var(--height-search-input-pill);
         }
 
         &:not(.focused) {
