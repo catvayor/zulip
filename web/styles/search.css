@@ -170,9 +170,6 @@
     .search-input {
         /* Avoid massive inheritance chain on font-size. */
         font-size: var(--base-font-size-px);
-        /* override height-input-pill from default input pills */
-        line-height: var(--height-search-input-pill);
-        min-height: var(--height-search-input-pill);
         /* override bootstrap padding for input[type="text"] */
         padding: 0;
         border: none;
@@ -214,7 +211,6 @@
         .pill {
             margin: 0;
             min-width: unset;
-            height: var(--height-search-input-pill);
         }
 
         &:not(.focused) {
@@ -228,29 +224,25 @@
         }
 
         .user-pill-container {
-            padding: 2px;
-            height: 22px;
             min-width: fit-content;
+            gap: 5px;
 
             > .pill-label {
                 min-width: fit-content;
                 white-space: nowrap;
                 width: fit-content;
+                /* Replaced by the 5px gap. */
+                margin-right: 0;
             }
 
             .pill {
-                height: 22px;
-                margin: 2px;
+                height: var(--height-input-pill);
                 border: none;
+                border-radius: 3px;
 
                 &:not(.deactivated-pill) {
                     background-color: var(--color-background-user-pill);
                 }
-            }
-
-            .pill-image {
-                width: 22px;
-                height: 22px;
             }
         }
     }
@@ -337,7 +329,7 @@
 
         .pill-image {
             /* Add line-height equal to height to mimic baseline alignment. */
-            line-height: 20px;
+            line-height: var(--length-input-pill-image);
             align-self: center;
         }
     }

@@ -208,8 +208,6 @@
     --vertical-spacing-input-pill: 2px;
     --outer-spacing-input-pill-container: var(--vertical-spacing-input-pill);
     --horizontal-spacing-input-pill: 6px;
-    /* 1.8571em is 26px at 14px/1em */
-    --height-search-input-pill: 1.8571em;
 
     /* Overlay heights for streams modal */
     --overlay-container-height: 95vh;
