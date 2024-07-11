@@ -74,21 +74,7 @@ except OSError:
 distro_info = parse_os_release()
 vendor = distro_info["ID"]
 os_version = distro_info["VERSION_ID"]
-if vendor == "debian" and os_version == "12":  # bookworm
-    POSTGRESQL_VERSION = "15"
-elif vendor == "ubuntu" and os_version == "22.04":  # jammy
-    POSTGRESQL_VERSION = "14"
-elif vendor == "ubuntu" and os_version == "24.04":  # noble
-    POSTGRESQL_VERSION = "16"
-elif vendor == "fedora" and os_version == "38":
-    POSTGRESQL_VERSION = "15"
-elif vendor == "rhel" and os_version.startswith("7."):
-    POSTGRESQL_VERSION = "10"
-elif vendor == "centos" and os_version == "7":
-    POSTGRESQL_VERSION = "10"
-else:
-    logging.critical("Unsupported platform: %s %s", vendor, os_version)
-    sys.exit(1)
+POSTGRESQL_VERSION = "15"
 
 VENV_DEPENDENCIES = get_venv_dependencies(vendor, os_version)
 
@@ -196,8 +182,10 @@ elif "fedora" in os_families():
         "msgpack-devel",
         *VENV_DEPENDENCIES,
     ]
-    BUILD_GROONGA_FROM_SOURCE = True
-    BUILD_PGROONGA_FROM_SOURCE = True
+
+SYSTEM_DEPENDENCIES = [ ]
+#BUILD_GROONGA_FROM_SOURCE = True
+#BUILD_PGROONGA_FROM_SOURCE = True
 
 if "fedora" in os_families():
     TSEARCH_STOPWORDS_PATH = f"/usr/pgsql-{POSTGRESQL_VERSION}/share/tsearch_data/"
@@ -349,13 +337,13 @@ def main(options: argparse.Namespace) -> NoReturn:
 
     for apt_dependency in SYSTEM_DEPENDENCIES:
         sha_sum.update(apt_dependency.encode())
-    if "debian" in os_families():
-        with open("scripts/lib/setup-apt-repo", "rb") as fb:
-            sha_sum.update(fb.read())
-    else:
-        # hash the content of setup-yum-repo*
-        with open("scripts/lib/setup-yum-repo", "rb") as fb:
-            sha_sum.update(fb.read())
+    #if "debian" in os_families():
+    #    with open("scripts/lib/setup-apt-repo", "rb") as fb:
+    #        sha_sum.update(fb.read())
+    #else:
+    #    # hash the content of setup-yum-repo*
+    #    with open("scripts/lib/setup-yum-repo", "rb") as fb:
+    #        sha_sum.update(fb.read())
 
     # hash the content of build-pgroonga if Groonga is built from source
     if BUILD_GROONGA_FROM_SOURCE:
@@ -367,28 +355,28 @@ def main(options: argparse.Namespace) -> NoReturn:
         with open("scripts/lib/build-pgroonga", "rb") as fb:
             sha_sum.update(fb.read())
 
-    new_apt_dependencies_hash = sha_sum.hexdigest()
-    last_apt_dependencies_hash = None
-    apt_hash_file_path = os.path.join(UUID_VAR_PATH, "apt_dependencies_hash")
-    with open(apt_hash_file_path, "a+") as hash_file:
-        hash_file.seek(0)
-        last_apt_dependencies_hash = hash_file.read()
+    #new_apt_dependencies_hash = sha_sum.hexdigest()
+    #last_apt_dependencies_hash = None
+    #apt_hash_file_path = os.path.join(UUID_VAR_PATH, "apt_dependencies_hash")
+    #with open(apt_hash_file_path, "a+") as hash_file:
+    #    hash_file.seek(0)
+    #    last_apt_dependencies_hash = hash_file.read()
 
-    if new_apt_dependencies_hash != last_apt_dependencies_hash:
-        try:
-            install_system_deps()
-        except subprocess.CalledProcessError:
-            try:
-                # Might be a failure due to network connection issues. Retrying...
-                print(WARNING + "Installing system dependencies failed; retrying..." + ENDC)
-                install_system_deps()
-            except BaseException as e:
-                # Suppress exception chaining
-                raise e from None
-        with open(apt_hash_file_path, "w") as hash_file:
-            hash_file.write(new_apt_dependencies_hash)
-    else:
-        print("No changes to apt dependencies, so skipping apt operations.")
+    #if new_apt_dependencies_hash != last_apt_dependencies_hash:
+    #    try:
+    #        install_system_deps()
+    #    except subprocess.CalledProcessError:
+    #        try:
+    #            # Might be a failure due to network connection issues. Retrying...
+    #            print(WARNING + "Installing system dependencies failed; retrying..." + ENDC)
+    #            install_system_deps()
+    #        except BaseException as e:
+    #            # Suppress exception chaining
+    #            raise e from None
+    #    with open(apt_hash_file_path, "w") as hash_file:
+    #        hash_file.write(new_apt_dependencies_hash)
+    #else:
+    #    print("No changes to apt dependencies, so skipping apt operations.")
 
     # Here we install node.
     proxy_env = [

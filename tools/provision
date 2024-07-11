@@ -5,10 +5,6 @@
 # will usually run fairly quickly when your dependencies are up to date.
 
 set -e
-if [ "$EUID" -eq 0 ]; then
-    echo "Error: The provision script must not be run as root" >&2
-    exit 1
-fi
 
 if [ -e "$(dirname "${BASH_SOURCE[0]}")/../.vagrant" ] && [ ! -e /home/vagrant ]; then
     echo 'Error: provision should be run inside the Vagrant environment.' >&2

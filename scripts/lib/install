@@ -163,7 +163,7 @@ read -r -a ADDITIONAL_PACKAGES <<<"${ADDITIONAL_PACKAGES:-}"
 # zulip::profile::docker for Docker.  Use
 # e.g. zulip::profile::app_frontend for a Zulip frontend server.
 PUPPET_CLASSES="${PUPPET_CLASSES:-zulip::profile::standalone}"
-POSTGRESQL_VERSION="${POSTGRESQL_VERSION:-16}"
+POSTGRESQL_VERSION="${POSTGRESQL_VERSION:-15}"
 
 if [ -n "$SELF_SIGNED_CERT" ] && [ -n "$USE_CERTBOT" ]; then
     set +x
@@ -217,7 +217,7 @@ export LANGUAGE="C.UTF-8"
 
 # Force a known path; this fixes problems on Debian where `su` from
 # non-root may not adjust `$PATH` to root's.
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # Check for a supported OS release.
 if [ -f /etc/os-release ]; then
@@ -241,16 +241,16 @@ if [ -f /etc/os-release ]; then
     esac
 fi
 
-if ! "$ZULIP_PATH/scripts/lib/supported-os"; then
-    system_requirements_failure <<EOF
-Unsupported OS release: $os_id $os_version_id
-
-Zulip in production is supported only on:
- - Debian 12
- - Ubuntu 22.04 LTS
- - Ubuntu 24.04 LTS
-EOF
-fi
+#if ! "$ZULIP_PATH/scripts/lib/supported-os"; then
+#    system_requirements_failure <<EOF
+#Unsupported OS release: $os_id $os_version_id
+#
+#Zulip in production is supported only on:
+# - Debian 12
+# - Ubuntu 22.04 LTS
+# - Ubuntu 24.04 LTS
+#EOF
+#fi
 
 machine="$(uname -m)"
 if [ "$machine" != x86_64 ] && [ "$machine" != aarch64 ]; then
@@ -259,12 +259,12 @@ Unsupported CPU architecture: $machine (expected x86_64 or aarch64).
 EOF
 fi
 
-dpkg_architecture="$(dpkg --print-architecture)"
-if [ "$dpkg_architecture" != amd64 ] && [ "$dpkg_architecture" != arm64 ]; then
-    system_requirements_failure <<EOF
-Unsupported OS architecture: $dpkg_architecture (expected amd64 or arm64).
-EOF
-fi
+#dpkg_architecture="$(dpkg --print-architecture)"
+#if [ "$dpkg_architecture" != amd64 ] && [ "$dpkg_architecture" != arm64 ]; then
+#    system_requirements_failure <<EOF
+#Unsupported OS architecture: $dpkg_architecture (expected amd64 or arm64).
+#EOF
+#fi
 
 has_universe() {
     apt-cache policy \
@@ -281,36 +281,36 @@ Zulip.  You can do this with:
 EOF
 fi
 
-case ",$PUPPET_CLASSES," in
-    *,zulip::profile::standalone,* | *,zulip::profile::postgresql,*)
-        if [ "$package_system" = apt ]; then
-            # We're going to install PostgreSQL from the PostgreSQL apt
-            # repository; this may conflict with the existing PostgreSQL.
-            OTHER_PG="$(dpkg --get-selections \
-                | grep -E '^postgresql-[0-9]+\s+install$' \
-                | grep -v "^postgresql-$POSTGRESQL_VERSION\b" \
-                | cut -f 1)" || true
-            if [ -n "$OTHER_PG" ]; then
-                INDENTED="${OTHER_PG//$'\n'/$'\n'    }"
-                SPACED="${OTHER_PG//$'\n'/ }"
-                cat <<EOF
-
-The following PostgreSQL servers were found to already be installed:
-
-    $INDENTED
-
-Zulip needs to install PostgreSQL $POSTGRESQL_VERSION, but does not wish
-to uninstall existing databases in order to do so.  Remove all other
-PostgreSQL servers manually before running the installer:
-
-    sudo apt-get remove $SPACED
-
-EOF
-                exit 1
-            fi
-        fi
-        ;;
-esac
+#case ",$PUPPET_CLASSES," in
+#    *,zulip::profile::standalone,* | *,zulip::profile::postgresql,*)
+#        if [ "$package_system" = apt ]; then
+#            # We're going to install PostgreSQL from the PostgreSQL apt
+#            # repository; this may conflict with the existing PostgreSQL.
+#            OTHER_PG="$(dpkg --get-selections \
+#                | grep -E '^postgresql-[0-9]+\s+install$' \
+#                | grep -v "^postgresql-$POSTGRESQL_VERSION\b" \
+#                | cut -f 1)" || true
+#            if [ -n "$OTHER_PG" ]; then
+#                INDENTED="${OTHER_PG//$'\n'/$'\n'    }"
+#                SPACED="${OTHER_PG//$'\n'/ }"
+#                cat <<EOF
+#
+#The following PostgreSQL servers were found to already be installed:
+#
+#    $INDENTED
+#
+#Zulip needs to install PostgreSQL $POSTGRESQL_VERSION, but does not wish
+#to uninstall existing databases in order to do so.  Remove all other
+#PostgreSQL servers manually before running the installer:
+#
+#    sudo apt-get remove $SPACED
+#
+#EOF
+#                exit 1
+#            fi
+#        fi
+#        ;;
+#esac
 
 # Check for at least ~1.86GB of RAM before starting installation;
 # otherwise users will find out about insufficient RAM via weird
@@ -328,83 +328,83 @@ if [ "$mem_kb" -lt 1860000 ]; then
 fi
 
 # Do package update, e.g. do `apt-get update` on Debian
-if [ "$package_system" = apt ]; then
-    # setup-apt-repo does an `apt-get update`
-    "$ZULIP_PATH"/scripts/lib/setup-apt-repo
-elif [ "$package_system" = yum ]; then
-    "$ZULIP_PATH"/scripts/lib/setup-yum-repo
-fi
+#if [ "$package_system" = apt ]; then
+#    # setup-apt-repo does an `apt-get update`
+#    "$ZULIP_PATH"/scripts/lib/setup-apt-repo
+#elif [ "$package_system" = yum ]; then
+#    "$ZULIP_PATH"/scripts/lib/setup-yum-repo
+#fi
 
 # Check early for missing SSL certificates
-if [ "$PUPPET_CLASSES" = "zulip::profile::standalone" ] && [ -z "$USE_CERTBOT""$SELF_SIGNED_CERT" ] && { ! [ -e "/etc/ssl/private/zulip.key" ] || ! [ -e "/etc/ssl/certs/zulip.combined-chain.crt" ]; }; then
-    set +x
-    cat <<EOF
-
-No SSL certificate found.  One or both required files is missing:
-    /etc/ssl/private/zulip.key
-    /etc/ssl/certs/zulip.combined-chain.crt
-
-Suggested solutions:
- * For most sites, the --certbot option is recommended.
- * If you have your own key and cert, see docs linked below
-   for how to install them.
- * For non-production testing, try the --self-signed-cert option.
-
-For help and more details, see our SSL documentation:
-  https://zulip.readthedocs.io/en/latest/production/ssl-certificates.html
-
-Once fixed, just rerun scripts/setup/install; it'll pick up from here!
-
-EOF
-    exit 1
-fi
+#if [ "$PUPPET_CLASSES" = "zulip::profile::standalone" ] && [ -z "$USE_CERTBOT""$SELF_SIGNED_CERT" ] && { ! [ -e "/etc/ssl/private/zulip.key" ] || ! [ -e "/etc/ssl/certs/zulip.combined-chain.crt" ]; }; then
+#    set +x
+#    cat <<EOF
+#
+#No SSL certificate found.  One or both required files is missing:
+#    /etc/ssl/private/zulip.key
+#    /etc/ssl/certs/zulip.combined-chain.crt
+#
+#Suggested solutions:
+# * For most sites, the --certbot option is recommended.
+# * If you have your own key and cert, see docs linked below
+#   for how to install them.
+# * For non-production testing, try the --self-signed-cert option.
+#
+#For help and more details, see our SSL documentation:
+#  https://zulip.readthedocs.io/en/latest/production/ssl-certificates.html
+#
+#Once fixed, just rerun scripts/setup/install; it'll pick up from here!
+#
+#EOF
+#    exit 1
+#fi
 
 # don't run dist-upgrade in one click apps to make the
 # installation process more seamless.
-if [ -z "$NO_DIST_UPGRADE" ]; then
-    if [ "$package_system" = apt ]; then
-        apt-get -y dist-upgrade "${APT_OPTIONS[@]}"
-    elif [ "$package_system" = yum ]; then
-        # On CentOS, there is no need to do `yum -y upgrade` because `yum -y
-        # update` already does the same thing.
-        :
-    fi
-fi
+#if [ -z "$NO_DIST_UPGRADE" ]; then
+#    if [ "$package_system" = apt ]; then
+#        apt-get -y dist-upgrade "${APT_OPTIONS[@]}"
+#    elif [ "$package_system" = yum ]; then
+#        # On CentOS, there is no need to do `yum -y upgrade` because `yum -y
+#        # update` already does the same thing.
+#        :
+#    fi
+#fi
 
-if [ "$package_system" = apt ]; then
-    # Note that any additions to these lists must also be added to
-    # `zulip::profile::base` such that the new dependency is seen by
-    # upgrades, as well as new installs.
-    if ! apt-get install -y \
-        python3 python3-yaml puppet git curl jq crudini \
-        "${ADDITIONAL_PACKAGES[@]}"; then
-        set +x
-        echo -e '\033[0;31m' >&2
-        echo "Installing packages failed; is network working and (on Ubuntu) the universe repository enabled?" >&2
-        echo >&2
-        echo -e '\033[0m' >&2
-        exit 1
-    fi
-elif [ "$package_system" = yum ]; then
-    if ! yum install -y \
-        python3 python3-pyyaml puppet git curl jq crudini \
-        "${ADDITIONAL_PACKAGES[@]}"; then
-        set +x
-        echo -e '\033[0;31m' >&2
-        echo "Installing packages failed; is network working?" >&2
-        echo >&2
-        echo -e '\033[0m' >&2
-        exit 1
-    fi
-fi
+#if [ "$package_system" = apt ]; then
+#    # Note that any additions to these lists must also be added to
+#    # `zulip::profile::base` such that the new dependency is seen by
+#    # upgrades, as well as new installs.
+#    if ! apt-get install -y \
+#        python3 python3-yaml puppet git curl jq crudini \
+#        "${ADDITIONAL_PACKAGES[@]}"; then
+#        set +x
+#        echo -e '\033[0;31m' >&2
+#        echo "Installing packages failed; is network working and (on Ubuntu) the universe repository enabled?" >&2
+#        echo >&2
+#        echo -e '\033[0m' >&2
+#        exit 1
+#    fi
+#elif [ "$package_system" = yum ]; then
+#    if ! yum install -y \
+#        python3 python3-pyyaml puppet git curl jq crudini \
+#        "${ADDITIONAL_PACKAGES[@]}"; then
+#        set +x
+#        echo -e '\033[0;31m' >&2
+#        echo "Installing packages failed; is network working?" >&2
+#        echo >&2
+#        echo -e '\033[0m' >&2
+#        exit 1
+#    fi
+#fi
 
 # We generate a self-signed cert even with certbot, so we can use the
 # webroot authenticator, which requires nginx be set up with a
 # certificate.
-if [ -n "$SELF_SIGNED_CERT" ] || [ -n "$USE_CERTBOT" ]; then
-    "$ZULIP_PATH"/scripts/setup/generate-self-signed-cert \
-        --exists-ok "${EXTERNAL_HOST:-$(hostname)}"
-fi
+#if [ -n "$SELF_SIGNED_CERT" ] || [ -n "$USE_CERTBOT" ]; then
+#    "$ZULIP_PATH"/scripts/setup/generate-self-signed-cert \
+#        --exists-ok "${EXTERNAL_HOST:-$(hostname)}"
+#fi
 
 # Generate /etc/zulip/zulip.conf .
 mkdir -p /etc/zulip
@@ -456,11 +456,13 @@ EOF
     fi
 fi
 
+exit 1
+
 if has_class "zulip::app_frontend_base"; then
     # Create and activate a virtualenv
     "$ZULIP_PATH"/scripts/lib/create-production-venv "$ZULIP_PATH"
 
-    "$ZULIP_PATH"/scripts/lib/install-node
+    #"$ZULIP_PATH"/scripts/lib/install-node
 
     if [ -z "$NO_OVERWRITE_SETTINGS" ] || ! [ -e "/etc/zulip/settings.py" ]; then
         cp -a "$ZULIP_PATH"/zproject/prod_settings_template.py /etc/zulip/settings.py

@@ -35,7 +35,7 @@ def python_version() -> str:
     """
     Returns the Python version as string 'Python major.minor.patchlevel'
     """
-    return subprocess.check_output(["/usr/bin/python3", "-VV"], text=True)
+    return subprocess.check_output(["python3", "-VV"], text=True)
 
 
 def hash_deps(deps: Iterable[str]) -> str:

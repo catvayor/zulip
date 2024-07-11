@@ -69,14 +69,14 @@ FEDORA_VENV_DEPENDENCIES = [
 
 
 def get_venv_dependencies(vendor: str, os_version: str) -> List[str]:
-    if "debian" in os_families():
-        return VENV_DEPENDENCIES
-    elif "rhel" in os_families():
-        return REDHAT_VENV_DEPENDENCIES
-    elif "fedora" in os_families():
-        return FEDORA_VENV_DEPENDENCIES
-    else:
-        raise AssertionError("Invalid vendor")
+    #if "debian" in os_families():
+    return VENV_DEPENDENCIES
+    #elif "rhel" in os_families():
+    #    return REDHAT_VENV_DEPENDENCIES
+    #elif "fedora" in os_families():
+    #    return FEDORA_VENV_DEPENDENCIES
+    #else:
+    #    raise AssertionError("Invalid vendor")
 
 
 def install_venv_deps(pip: str, requirements_file: str) -> None:
